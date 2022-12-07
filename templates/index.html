@@ -5,58 +5,103 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Симулятор касс</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
-    <script src="static/js/script.js"></script>
+    <script src="{{ url_for('static', path='js/script.js') }}"></script>
+    <link href="{{ url_for('static', path='css/styles.css') }}" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.0.1/iconify.min.js"></script>
 </head>
 <body>
-<div id="control_panel">
-    Последняя волна: <span id="wave_size">{{ counter_simulator.last_wave_size }}</span>
-    <div id="complainers"></div>
+<div id="control_panel" class="control-panel margin-bottom">
+    <span class="margin-bottom">Последняя волна: <span id="wave_size">{{ counter_simulator.last_wave_size }}</span></span>
+    <div id="complainers" class="margin-bottom"></div>
     <form id="control_panel_form">
-        <label>Максимальный размер волны
-            <input name="wave_max_size" type="number" value="{{ counter_simulator.wave_max_size }}" min="0" required>
-        </label>
-        <label>Максимальный интервал между волнами
-            <input name="wave_max_interval" type="number" value="{{ counter_simulator.wave_max_interval }}" min="1"
-                   required>
-        </label>
-        <button id="control_panel_button">Изменить</button>
-        <div>
-            <button type="button" id="add_counter_button">Добавить кассу</button>
-            <button type="button" id="toggle_pause">
+        <div class="control-panel-row margin-bottom">
+            <div title="Максимальный размер волны" class="control-panel-row">
+                <span class="iconify-inline control-panel-element" data-icon="mdi:people-add" data-width="28"></span>
+                <input class="control-panel-input control-panel-element" name="wave_max_size" type="number"
+                       value="{{ counter_simulator.wave_max_size }}" min="0" required>
+            </div>
+            <div title="Максимальный интервал между волнами" class="control-panel-row">
+                <span class="iconify-inline control-panel-element" data-icon="mdi:account-clock" data-width="28"></span>
+                <input class="control-panel-input control-panel-element" name="wave_max_interval" type="number"
+                       value="{{ counter_simulator.wave_max_interval }}" min="1"
+                       required>
+            </div>
+            <button class="btn control-panel-row" id="control_panel_button">Изменить</button>
+        </div>
+        <div class="control-panel-row margin-bottom">
+            <button class="btn control-panel-element" type="button" id="add_counter_button">Добавить кассу</button>
+            <button class="btn control-panel-element" type="button" id="toggle_pause">
                 {% if counter_simulator.is_on_pause %}
                     Продолжить
                 {% else %}
                     Приостановить
                 {% endif %}
             </button>
-            <label>Количество касс
-                <input name="number_of_counters" type="number" value="5" min="0" required>
-                <button type="button" id="change_number_of_counters_button">Установить</button>
+            <label class="control-panel-row" title="Количество касс">
+                <span class="iconify-inline control-panel-element"
+                      data-icon="fa-solid:cash-register" data-width="25">
+                </span>
+                <input class="control-panel-input control-panel-element" name="number_of_counters" type="number"
+                       value="5" min="0" required>
+                <button class="btn control-panel-element" type="button" id="change_number_of_counters_button">
+                    Установить
+                </button>
             </label>
         </div>
     </form>
 </div>
-<div id="counters">
+<div class="counters-container" id="counters">
     {% for counter in counter_simulator.counters %}
-        <div id="{{ counter.id }}">
-            <span id="counter_id">Касса {{ counter.id }}</span><br>
-            Клиентов в очереди: <span id="queue_size">{{ counter.counters|length }}</span><br>
-            Среднее время обслуживания: <span
-                id="average_service_time">{{ "%.2f"|format(counter.average_service_time) }}</span>
-            <form action="/update_counter/{{ counter.id }}"
-                  method="post"
-                  id="form{{ counter.id }}">
-                <label>Минимальное время обслуживания
-                    <input name="min_time" type="number" value="{{ counter.min_time }}" min="1" required>
-                </label>
-                <br>
-                <label>Максимальное время обслуживания
-                    <input name="max_time" type="number" value="{{ counter.max_time }}" min="1" required>
-                </label>
-                <button type="submit">Изменить</button>
-                <button type="button" name="delete_counter_button">Удалить</button>
-            </form>
+        <div class="card" id="{{ counter.id }}">
+            <span class="card-name" id="counter_id">Касса {{ counter.id }}</span><br>
+            <div class="card-info-container">
+            <span class="icon-info" title="Среднее время обслуживания">
+                <span class="iconify-inline icon" data-icon="mdi:clock-time-four-outline" data-width="25"></span>
+                <span id="average_service_time">
+                    {% if counter.total_clients_served == 0 %}
+                        0.00
+                    {% else %}
+                        {{ "%.2f"|format(counter.total_service_time / counter.total_clients_served) }}
+                    {% endif %}
+                </span>
+            </span>
+                <span class="icon-info" title="Клиентов в очереди">
+                <span class="iconify-inline icon" data-icon="mdi:people" data-width="25"></span>
+                <span class="client-count" id="queue_size">{{ counter.counters|length }}</span>
+            </span>
+                <span class="icon-info" title="Осталось секунд">
+                <span class="iconify-inline icon" data-icon="mdi:account-clock" data-width="25"></span>
+                <span id="service_time">{{ counter.last_service_time }}</span>
+            </span>
+            </div>
+            <div class="card-control">
+                <form action="/update_counter/{{ counter.id }}" method="post" id="form{{ counter.id }}">
+                    <div class="input-container">
+                        <label class="icon-info" title="Минимальное время обслуживания">
+                            <span class="iconify-inline" data-icon="mdi:clock-minus"
+                                  data-width="25"></span>
+                            <span id="min_time">{{ counter.min_time }}</span>
+                            <input class="card-input" name="min_time" type="number"
+                                   value="{{ counter.min_time }}" min="1" required>
+                        </label>
+                        <label class="icon-info" title="Максимальное время обслуживания">
+                            <span class="iconify-inline" data-icon="mdi:clock-plus"
+                                  data-width="25"></span>
+                            <span id="max_time">{{ counter.max_time }}</span>
+                            <input class="card-input" name="max_time" type="number"
+                                   value="{{ counter.max_time }}" min="1" required>
+                        </label>
+                    </div>
+                    <div class="button-container">
+                        <button class="btn" type="submit">Изменить</button>
+                        <button class="btn" type="button" name="delete_counter_button">Удалить</button>
+                    </div>
+                </form>
+            </div>
         </div>
     {% endfor %}
 </div>

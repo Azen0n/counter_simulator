@@ -2,30 +2,32 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from uuid import UUID, uuid4
 import asyncio
+
+index = 0
+
+
+def index_increment():
+    global index
+    index += 1
+    return index
 
 
 @dataclass
 class Counter:
-    id: UUID = field(default_factory=uuid4)
+    is_on_pause: bool = False
+    id: int = field(default_factory=index_increment)
     min_time: int = 1
     max_time: int = 10
     queue_size: int = 0
-    service_times: list[int] = field(default_factory=list)
+    total_service_time: int = 0
+    total_clients_served: int = 0
     is_working: bool = False
-    is_on_pause: bool = False
+    last_service_time: int = None
 
     @property
     def service_time(self) -> int:
         return random.randint(self.min_time, self.max_time)
-
-    @property
-    def average_service_time(self) -> float:
-        try:
-            return sum(self.service_times) / len(self.service_times)
-        except ZeroDivisionError:
-            return 0
 
     def update_time(self, min_time: int, max_time: int):
         self.min_time = min_time
@@ -38,12 +40,15 @@ class Counter:
         while not self.is_working:
             if self.queue_size > 0:
                 service_time = self.service_time
-                self.service_times.append(service_time)
+                self.last_service_time = service_time
+                self.total_clients_served += 1
                 print(f'Counter {self.id} serving a client in {service_time} s...')
                 for i in range(service_time):
-                    await asyncio.sleep(1)
                     while self.is_on_pause:
                         await asyncio.sleep(1)
+                    await asyncio.sleep(1)
+                    self.total_service_time += 1
+                    self.last_service_time -= 1
                 self.queue_size -= 1
                 print(f'Counter {self.id} served a client.')
             else:
@@ -62,9 +67,9 @@ class CounterSimulator:
 
     def __post_init__(self):
         for _ in range(5):
-            self.counters.append(Counter())
+            self.counters.append(Counter(is_on_pause=False))
 
-    def find_counter(self, counter_id: UUID) -> Counter | None:
+    def find_counter(self, counter_id: int) -> Counter | None:
         for counter in self.counters:
             if counter.id == counter_id:
                 return counter
@@ -112,8 +117,8 @@ class CounterSimulator:
     def status(self) -> str:
         return ', '.join([f'{counter.queue_size}' for counter in self.counters])
 
-    def create_counter(self):
-        counter = Counter()
+    def create_counter(self, is_on_pause: bool):
+        counter = Counter(is_on_pause=is_on_pause)
         self.counters.append(counter)
         return counter
 
@@ -121,7 +126,7 @@ class CounterSimulator:
         self.wave_max_size = wave_max_size
         self.wave_max_interval = wave_max_interval
 
-    def delete_counter(self, counter_id: UUID) -> int:
+    def delete_counter(self, counter_id: int) -> int:
         counter = self.find_counter(counter_id)
         self.counters.remove(counter)
         queue_size = counter.queue_size

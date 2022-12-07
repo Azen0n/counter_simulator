@@ -1,5 +1,4 @@
 import asyncio
-from uuid import UUID
 
 import uvicorn
 from fastapi import FastAPI, Request, BackgroundTasks, Form
@@ -32,7 +31,7 @@ async def index(request: Request):
 
 @app.post('/create_counter')
 async def create_counter(background_tasks: BackgroundTasks):
-    counter = counter_simulator.create_counter()
+    counter = counter_simulator.create_counter(is_on_pause=counter_simulator.is_on_pause)
     counter_simulator.reallocate_queues()
     background_tasks.add_task(counter.run_service)
     return counter
@@ -52,7 +51,7 @@ async def change_number_of_counters(background_tasks: BackgroundTasks, number_of
     elif len(counter_simulator.counters) < number_of_counters:
         counters['action'] = 'create'
         for _ in range(number_of_counters - len(counter_simulator.counters)):
-            counter = counter_simulator.create_counter()
+            counter = counter_simulator.create_counter(is_on_pause=counter_simulator.is_on_pause)
             counters['counters'].append(counter)
             counter_simulator.reallocate_queues()
         background_tasks.add_task(run_all_services, counters['counters'])
@@ -66,10 +65,11 @@ async def run_all_services(counters: list[Counter]):
 
 
 @app.post('/update_counter/{counter_id}')
-async def update_counter(counter_id: UUID, min_time: int = Form(...), max_time: int = Form(...)):
+async def update_counter(counter_id: int, min_time: int = Form(...), max_time: int = Form(...)):
+    counter = counter_simulator.find_counter(counter_id)
     if not (1 <= min_time <= max_time and max_time >= 1):
         print('Counter not updated')
-        return
+        return counter if counter else None
     counter = counter_simulator.find_counter(counter_id)
     if counter:
         counter.update_time(min_time, max_time)
@@ -88,7 +88,7 @@ async def update_counter_simulator(wave_max_size: int = Form(...), wave_max_inte
 
 
 @app.delete('/delete_counter/{counter_id}')
-async def delete_counter(counter_id: UUID):
+async def delete_counter(counter_id: int):
     remaining_clients = counter_simulator.delete_counter(counter_id)
     counter_simulator.allocate_clients(remaining_clients)
     return counter_simulator

@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+body {
+    font-family: 'Open Sans', sans-serif !important;
+}
+
+.counters-container {
+    display: flex;
+    width: 100em;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    padding: 1em 2em;
+    margin: 0.25em;
+    border-radius: 1em;
+    border: 0.25em solid cornflowerblue;
+
+    background: aliceblue;
+    width: 12em;
+}
+
+.margin-right {
+    margin-right: 0.5em;
+}
+
+.card-info-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.2em;
+}
+
+.icon {
+    margin-right: 0.1em;
+}
+
+.icon-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.client-count {
+    max-width: 3em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+.input-container {
+    margin-bottom: 0.2em;
+}
+
+.card-input {
+    width: 8em;
+    border: 0.2em solid cornflowerblue;
+    border-radius: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn {
+    background: cornflowerblue;
+    border: none;
+    padding: 0.5em 1em;
+    text-decoration: none;
+    border-radius: 0.2em;
+    color: white;
+}
+
+input {
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: 1em;
+}
+
+.control-panel-input {
+    width: 8em;
+    border: 0.2em solid cornflowerblue;
+    border-radius: 0.2em;
+}
+
+.control-panel-row {
+    display: flex;
+    align-items: center;
+}
+
+.control-panel-element {
+    margin-right: 0.5em;
+}
+
+.margin-bottom {
+    margin-bottom: 0.2em;
+}

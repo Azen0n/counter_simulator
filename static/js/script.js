@@ -112,10 +112,12 @@ $(document).ready(function () {
         for (let counter of data['counter_simulator']['counters']) {
             if ($(`#${counter['id']}`).length > 0) {
                 $(`#${counter['id']} #queue_size`).text(counter['queue_size']);
-                $(`#${counter['id']} #counter_id`).css('background', '');
-                let total_service_time = counter['service_times'].reduce((a, b) => a + b, 0);
-                let average_service_time = (total_service_time / counter['service_times'].length) || 0;
+                $(`#${counter['id']}`).css({'border': '0.25em solid cornflowerblue', 'background': 'aliceblue'});
+                let average_service_time = counter['total_clients_served'] === 0 ? 0 : counter['total_service_time'] / counter['total_clients_served'];
                 $(`#${counter['id']} #average_service_time`).text(average_service_time.toFixed(2));
+                $(`#${counter['id']} #service_time`).text(counter['last_service_time']);
+                $(`#${counter['id']} #min_time`).text(counter['min_time']);
+                $(`#${counter['id']} #max_time`).text(counter['max_time']);
             } else {
                 createCounter(counter);
             }
@@ -125,10 +127,10 @@ $(document).ready(function () {
         let maxQueueSizeCounter = getMaxQueueSize(data);
 
         if (minQueueSizeCounter) {
-            $(`#${minQueueSizeCounter['id']} #counter_id`).css('background', 'green');
+            $(`#${minQueueSizeCounter['id']}`).css({'border': '0.25em solid greenyellow', 'background': '#dbffdb'});
         }
         if (maxQueueSizeCounter) {
-            $(`#${maxQueueSizeCounter['id']} #counter_id`).css('background', 'red');
+            $(`#${maxQueueSizeCounter['id']}`).css({'border': '0.25em solid orangered', 'background': '#FFDBE1FF'});
         }
     }
 
@@ -181,9 +183,9 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (data) {
                 if (!jQuery.isEmptyObject(data)) {
-                    let counterForm = $(`#form${counter_id}`);
-                    counterForm.min_time = min_time;
-                    counterForm.max_time = max_time;
+                    let counterForm = $(`#form${counter_id}`)[0];
+                    counterForm.min_time.value = data['min_time'];
+                    counterForm.max_time.value = data['max_time'];
                     console.log(`Counter ${data.id} updated`)
                 }
             },
@@ -209,27 +211,51 @@ $(document).ready(function () {
     }
 
     function createCounterComponent(counter) {
-        let total_service_time = counter['service_times'].reduce((a, b) => a + b, 0);
-        let average_service_time = (total_service_time / counter['service_times'].length) || 0;
+        let average_service_time = counter['total_clients_served'] === 0 ? 0 : counter['total_service_time'] / counter['total_clients_served'];
         let div = document.createElement('div');
         div.id = `${counter.id}`;
+        div.classList.add('card');
+
         div.innerHTML = `
-            <span id="counter_id">Касса ${counter.id}</span><br>
-            Клиентов в очереди: <span id="queue_size">${counter.queue_size}</span><br>
-            Среднее время обслуживания: <span id="average_service_time">${average_service_time.toFixed(2)}</span>
-            <form action="/update_counter/${counter.id}"
-                  method="post"
-                  id="form${counter.id}">
-                <label>Минимальное время обслуживания
-                    <input name="min_time" type="number" value="${counter.min_time}" min="1" required>
-                </label>
-                <br>
-                <label>Максимальное время обслуживания
-                    <input name="max_time" type="number" value="${counter.max_time}" min="1" required>
-                </label>
-                <button type="submit">Изменить</button>
-                <button type="button" name="delete_counter_button">Удалить</button>
-            </form>
+            <span class="card-name" id="counter_id">Касса ${counter.id}</span><br>
+            <div class="card-info-container">
+            <span class="icon-info" title="Среднее время обслуживания">
+                <span class="iconify-inline icon" data-icon="mdi:clock-time-four-outline" data-width="25"></span>
+                <span id="average_service_time">${average_service_time.toFixed(2)}</span>
+            </span>
+                <span class="icon-info" title="Клиентов в очереди">
+                <span class="iconify-inline icon" data-icon="mdi:people" data-width="25"></span>
+                <span class="client-count" id="queue_size">${counter.queue_size}</span>
+            </span>
+                <span class="icon-info" title="Осталось секунд">
+                <span class="iconify-inline icon" data-icon="mdi:account-clock" data-width="25"></span>
+                <span id="service_time">${counter.last_service_time}</span>
+            </span>
+            </div>
+            <div class="card-control">
+                <form action="/update_counter/${counter.id}" method="post" id="form${counter.id}">
+                    <div class="input-container">                        
+                        <label class="icon-info" title="Минимальное время обслуживания">
+                            <span class="iconify-inline" data-icon="mdi:clock-minus"
+                                  data-width="25"></span>
+                            <span id="min_time">${counter.min_time}</span>
+                            <input class="card-input" name="min_time" type="number"
+                                   value="${counter.min_time}" min="1" required>
+                        </label>
+                        <label class="icon-info" title="Максимальное время обслуживания">
+                            <span class="iconify-inline" data-icon="mdi:clock-plus"
+                                  data-width="25"></span>
+                            <span id="max_time">${counter.max_time}</span>
+                            <input class="card-input" name="max_time" type="number"
+                                   value="${counter.max_time}" min="1" required>
+                        </label>
+                    </div>
+                    <div class="button-container">
+                        <button class="btn" type="submit">Изменить</button>
+                        <button class="btn" type="button" name="delete_counter_button">Удалить</button>
+                    </div>
+                </form>
+            </div>
         `;
         return div;
     }
