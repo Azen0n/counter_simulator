@@ -1,0 +1,64 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Симулятор касс</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="static/js/script.js"></script>
+</head>
+<body>
+<div id="control_panel">
+    Последняя волна: <span id="wave_size">{{ counter_simulator.last_wave_size }}</span>
+    <div id="complainers"></div>
+    <form id="control_panel_form">
+        <label>Максимальный размер волны
+            <input name="wave_max_size" type="number" value="{{ counter_simulator.wave_max_size }}" min="0" required>
+        </label>
+        <label>Максимальный интервал между волнами
+            <input name="wave_max_interval" type="number" value="{{ counter_simulator.wave_max_interval }}" min="1"
+                   required>
+        </label>
+        <button id="control_panel_button">Изменить</button>
+        <div>
+            <button type="button" id="add_counter_button">Добавить кассу</button>
+            <button type="button" id="toggle_pause">
+                {% if counter_simulator.is_on_pause %}
+                    Продолжить
+                {% else %}
+                    Приостановить
+                {% endif %}
+            </button>
+            <label>Количество касс
+                <input name="number_of_counters" type="number" value="5" min="0" required>
+                <button type="button" id="change_number_of_counters_button">Установить</button>
+            </label>
+        </div>
+    </form>
+</div>
+<div id="counters">
+    {% for counter in counter_simulator.counters %}
+        <div id="{{ counter.id }}">
+            <span id="counter_id">Касса {{ counter.id }}</span><br>
+            Клиентов в очереди: <span id="queue_size">{{ counter.counters|length }}</span><br>
+            Среднее время обслуживания: <span
+                id="average_service_time">{{ "%.2f"|format(counter.average_service_time) }}</span>
+            <form action="/update_counter/{{ counter.id }}"
+                  method="post"
+                  id="form{{ counter.id }}">
+                <label>Минимальное время обслуживания
+                    <input name="min_time" type="number" value="{{ counter.min_time }}" min="1" required>
+                </label>
+                <br>
+                <label>Максимальное время обслуживания
+                    <input name="max_time" type="number" value="{{ counter.max_time }}" min="1" required>
+                </label>
+                <button type="submit">Изменить</button>
+                <button type="button" name="delete_counter_button">Удалить</button>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html>
